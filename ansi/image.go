@@ -52,7 +52,7 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 		img, err := loadImage(u)
 		if err == nil {
 			m := mosaic.New()
-			m = m.Width(ctx.options.WordWrap)
+			m = m.Width(ctx.options.WordWrap * 2)
 			art := m.Render(img)
 			el := &BaseElement{
 				Token: art,
