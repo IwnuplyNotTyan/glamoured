@@ -229,6 +229,14 @@ func WithMosaic(enabled bool) TermRendererOption {
 	}
 }
 
+// WithMosaicWidth sets the maximum width in character cells for mosaic images.
+func WithMosaicWidth(width int) TermRendererOption {
+	return func(tr *TermRenderer) error {
+		tr.ansiOptions.MosaicWidth = width
+		return nil
+	}
+}
+
 // WithOptions sets multiple TermRenderer options within a single TermRendererOption.
 func WithOptions(options ...TermRendererOption) TermRendererOption {
 	return func(tr *TermRenderer) error {

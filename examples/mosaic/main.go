@@ -26,8 +26,27 @@ This is an example of rendering an image with Glamour using
 Pretty cool!
 `, imageURL)
 
-	fmt.Println("─── With mosaic (default) ───")
-	out, err := glamour.Render(in, "dark")
+	fmt.Println("─── With mosaic (default, half width) ───")
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+	)
+	out, err := r.Render(in)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Print(out)
+
+	fmt.Println("─── With mosaic (full width) ───")
+	r, err = glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+		glamour.WithMosaicWidth(80),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+	out, err = r.Render(in)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
@@ -35,7 +54,7 @@ Pretty cool!
 	fmt.Print(out)
 
 	fmt.Println("\n─── Without mosaic ───")
-	r, err := glamour.NewTermRenderer(
+	r, err = glamour.NewTermRenderer(
 		glamour.WithStandardStyle("dark"),
 		glamour.WithMosaic(false),
 	)

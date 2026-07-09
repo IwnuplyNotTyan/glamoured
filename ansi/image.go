@@ -51,8 +51,15 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 		u := resolveRelativeURL(e.BaseURL, e.URL)
 		img, err := loadImage(u)
 		if err == nil {
+			width := ctx.options.MosaicWidth
+			if width <= 0 {
+				width = ctx.options.WordWrap / 2
+				if width < 20 {
+					width = 20
+				}
+			}
 			m := mosaic.New()
-			m = m.Width(ctx.options.WordWrap * 2)
+			m = m.Width(width * 2)
 			art := m.Render(img)
 			el := &BaseElement{
 				Token: art,

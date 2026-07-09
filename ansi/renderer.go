@@ -18,6 +18,7 @@ type Options struct {
 	BaseURL          string
 	WordWrap         int
 	MosaicEnabled    bool
+	MosaicWidth      int
 	TableWrap        *bool
 	InlineTableLinks bool
 	PreserveNewLines bool
