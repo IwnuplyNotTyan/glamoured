@@ -77,7 +77,8 @@ func NewTermRenderer(options ...TermRendererOption) (*TermRenderer, error) {
 			),
 		),
 		ansiOptions: ansi.Options{
-			WordWrap: defaultWidth,
+			WordWrap:      defaultWidth,
+			MosaicEnabled: true,
 		},
 	}
 	for _, o := range options {
