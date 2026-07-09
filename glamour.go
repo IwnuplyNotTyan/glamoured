@@ -220,6 +220,14 @@ func WithChromaFormatter(formatter string) TermRendererOption {
 	}
 }
 
+// WithMosaic enables or disables mosaic image rendering.
+func WithMosaic(enabled bool) TermRendererOption {
+	return func(tr *TermRenderer) error {
+		tr.ansiOptions.MosaicEnabled = enabled
+		return nil
+	}
+}
+
 // WithOptions sets multiple TermRenderer options within a single TermRendererOption.
 func WithOptions(options ...TermRendererOption) TermRendererOption {
 	return func(tr *TermRenderer) error {
