@@ -71,6 +71,9 @@ func TestRenderer(t *testing.T) {
 				),
 				goldmark.WithParserOptions(
 					parser.WithAutoHeadingID(),
+					parser.WithASTTransformers(
+						util.Prioritized(&CalloutMarkerTransformer{}, 100),
+					),
 				),
 			)
 
@@ -127,6 +130,9 @@ func TestRendererIssues(t *testing.T) {
 				),
 				goldmark.WithParserOptions(
 					parser.WithAutoHeadingID(),
+					parser.WithASTTransformers(
+						util.Prioritized(&CalloutMarkerTransformer{}, 100),
+					),
 				),
 			)
 
@@ -144,3 +150,133 @@ func TestRendererIssues(t *testing.T) {
 		})
 	}
 }
+
+func TestCalloutBlocks(t *testing.T) {
+	input := `> [!NOTE]
+> This is a note
+
+> [!TIP]
+> This is a tip
+
+> [!IMPORTANT]
+> This is important
+
+> [!WARNING]
+> This is a warning
+
+> [!CAUTION]
+> This is a caution
+
+> [!NOTE] Inline note text
+> More note text
+
+> [!note] lowercase marker
+> should still work
+`
+
+	options := Options{
+		WordWrap: 80,
+	}
+	err := json.Unmarshal([]byte(`{
+		"block_quote": {
+			"indent": 1,
+			"indent_token": "│ "
+		}
+	}`), &options.Styles)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			emoji.Emoji,
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+			parser.WithASTTransformers(
+				util.Prioritized(&CalloutMarkerTransformer{}, 100),
+			),
+		),
+	)
+
+	ar := NewRenderer(options)
+	md.SetRenderer(
+		renderer.NewRenderer(
+			renderer.WithNodeRenderers(util.Prioritized(ar, 1000))))
+
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(input), &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+
+	if strings.Contains(output, "[!NOTE]") {
+		t.Error("output should not contain raw [!NOTE] marker")
+	}
+	if strings.Contains(output, "[!TIP]") {
+		t.Error("output should not contain raw [!TIP] marker")
+	}
+	if strings.Contains(output, "[!IMPORTANT]") {
+		t.Error("output should not contain raw [!IMPORTANT] marker")
+	}
+	if strings.Contains(output, "[!WARNING]") {
+		t.Error("output should not contain raw [!WARNING] marker")
+	}
+	if strings.Contains(output, "[!CAUTION]") {
+		t.Error("output should not contain raw [!CAUTION] marker")
+	}
+
+	if !strings.Contains(output, "ℹ Note:") {
+		t.Error("output should contain ℹ Note: label")
+	}
+	if !strings.Contains(output, "💡 Tip:") {
+		t.Error("output should contain 💡 Tip: label")
+	}
+	if !strings.Contains(output, "❗ Important:") {
+		t.Error("output should contain ❗ Important: label")
+	}
+	if !strings.Contains(output, "⚠ Warning:") {
+		t.Error("output should contain ⚠ Warning: label")
+	}
+	if !strings.Contains(output, "🛑 Caution:") {
+		t.Error("output should contain 🛑 Caution: label")
+	}
+
+	if !strings.Contains(output, "\x1b[38;5;39m") {
+		t.Error("output should contain color 39 for NOTE indent")
+	}
+	if !strings.Contains(output, "\x1b[38;5;42m") {
+		t.Error("output should contain color 42 for TIP indent")
+	}
+	if !strings.Contains(output, "\x1b[38;5;129m") {
+		t.Error("output should contain color 129 for IMPORTANT indent")
+	}
+	if !strings.Contains(output, "\x1b[38;5;214m") {
+		t.Error("output should contain color 214 for WARNING indent")
+	}
+	if !strings.Contains(output, "\x1b[38;5;196m") {
+		t.Error("output should contain color 196 for CAUTION indent")
+	}
+
+	if !strings.Contains(output, "This is a note") {
+		t.Error("output should contain 'This is a note'")
+	}
+	if !strings.Contains(output, "Inline note text") {
+		t.Error("output should contain 'Inline note text'")
+	}
+	if !strings.Contains(output, "More note text") {
+		t.Error("output should contain 'More note text'")
+	}
+
+	// Verify bold rendering for labels (bold is applied as part of combined SGR codes like \x1b[38;5;39;1m)
+	if !strings.Contains(output, ";1m") && !strings.Contains(output, "\x1b[1m") {
+		t.Error("output should contain bold escape sequence for labels")
+	}
+	if !strings.Contains(output, "lowercase marker") {
+		t.Error("output should contain 'lowercase marker'")
+	}
+}
+

@@ -12,10 +12,11 @@ import (
 // After all children have been rendered into it, it applies indentation and
 // margins around them and writes everything to the parent rendering buffer.
 type BlockElement struct {
-	Block   *bytes.Buffer
-	Style   StyleBlock
-	Margin  bool
-	Newline bool
+	Block       *bytes.Buffer
+	Style       StyleBlock
+	Margin      bool
+	Newline     bool
+	IsBlockquote bool
 }
 
 // Render renders a BlockElement.

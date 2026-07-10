@@ -12,6 +12,8 @@ import (
 	east "github.com/yuin/goldmark-emoji/ast"
 	"github.com/yuin/goldmark/ast"
 	astext "github.com/yuin/goldmark/extension/ast"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/text"
 	nhtml "golang.org/x/net/html"
 )
 
@@ -87,9 +89,10 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 	// Blockquote
 	case ast.KindBlockquote:
 		e := &BlockElement{
-			Block:  &bytes.Buffer{},
-			Style:  cascadeStyle(ctx.blockStack.Current().Style, ctx.options.Styles.BlockQuote, false),
-			Margin: true,
+			Block:        &bytes.Buffer{},
+			Style:        cascadeStyle(ctx.blockStack.Current().Style, ctx.options.Styles.BlockQuote, false),
+			Margin:       true,
+			IsBlockquote: true,
 		}
 		return Element{
 			Entering: "\n",
@@ -173,6 +176,23 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 	case ast.KindText:
 		n := node.(*ast.Text)
 		s := string(n.Segment.Value(source))
+
+		if ct := detectCallout(s); ct != nil && isInsideBlockquote(node) {
+			colorBlockquoteIndent(ctx, ct.color)
+			rest := strings.TrimLeft(s[len(ct.marker):], " ")
+
+			if n.HardLineBreak() || n.SoftLineBreak() {
+				rest += "\n"
+			}
+
+			return Element{
+				Renderer: &CalloutElement{
+					Label: ct.icon + " " + ct.label + " ",
+					Rest:  rest,
+					Color: ct.color,
+				},
+			}
+		}
 
 		if n.HardLineBreak() || (n.SoftLineBreak()) {
 			s += "\n"
@@ -537,4 +557,159 @@ func parseHTMLImage(htmlInput string) (src string, width int, height int) {
 	}
 	findImg(doc)
 	return
+}
+
+type calloutType struct {
+	marker string
+	label  string
+	color  string
+	icon   string
+}
+
+var calloutTypes = []calloutType{
+	{marker: "[!NOTE]", label: "Note:", color: "39", icon: "ℹ"},
+	{marker: "[!TIP]", label: "Tip:", color: "42", icon: "💡"},
+	{marker: "[!IMPORTANT]", label: "Important:", color: "129", icon: "❗"},
+	{marker: "[!WARNING]", label: "Warning:", color: "214", icon: "⚠"},
+	{marker: "[!CAUTION]", label: "Caution:", color: "196", icon: "🛑"},
+}
+
+func detectCallout(s string) *calloutType {
+	upper := strings.ToUpper(s)
+	for _, ct := range calloutTypes {
+		if strings.HasPrefix(upper, ct.marker) {
+			c := ct
+			return &c
+		}
+	}
+	return nil
+}
+
+func isInsideBlockquote(n ast.Node) bool {
+	for p := n.Parent(); p != nil; p = p.Parent() {
+		if p.Kind() == ast.KindBlockquote {
+			return true
+		}
+	}
+	return false
+}
+
+func colorBlockquoteIndent(ctx RenderContext, color string) {
+	bs := *ctx.blockStack
+	for i := len(bs) - 1; i >= 0; i-- {
+		if bs[i].IsBlockquote {
+			token := " "
+			if bs[i].Style.IndentToken != nil {
+				token = *bs[i].Style.IndentToken
+			}
+			styledToken := fmt.Sprintf("\x1b[38;5;%sm%s\x1b[0m", color, token)
+			bs[i].Style.IndentToken = &styledToken
+			return
+		}
+	}
+}
+
+// CalloutElement renders a GitHub-style callout label.
+type CalloutElement struct {
+	Label string
+	Rest  string
+	Color string
+}
+
+// Render renders the callout label with styled text.
+func (e *CalloutElement) Render(w io.Writer, ctx RenderContext) error {
+	bs := ctx.blockStack
+
+	labelStyle := StylePrimitive{
+		Color: &e.Color,
+		Bold:  boolPtr(true),
+	}
+	labelStyle = cascadeStylePrimitives(bs.Current().Style.StylePrimitive, labelStyle)
+	if _, err := renderText(w, labelStyle, e.Label); err != nil {
+		return err
+	}
+
+	if e.Rest != "" {
+		restStyle := cascadeStylePrimitives(bs.Current().Style.StylePrimitive, ctx.options.Styles.Text)
+		if _, err := renderText(w, restStyle, escapeReplacer.Replace(html.UnescapeString(e.Rest))); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func boolPtr(b bool) *bool { return &b }
+
+// CalloutMarkerTransformer transforms goldmark AST to merge callout markers
+// split by the parser into separate text nodes.
+type CalloutMarkerTransformer struct{}
+
+func (t *CalloutMarkerTransformer) Transform(doc *ast.Document, reader text.Reader, pc parser.Context) {
+	src := reader.Source()
+	ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering || n.Kind() != ast.KindParagraph {
+			return ast.WalkContinue, nil
+		}
+		if n.Parent() == nil || n.Parent().Kind() != ast.KindBlockquote {
+			return ast.WalkContinue, nil
+		}
+
+		if n.Lines().Len() == 0 {
+			return ast.WalkContinue, nil
+		}
+		seg := n.Lines().At(0)
+		firstLine := string(seg.Value(src))
+
+		var matchedMarker string
+		upper := strings.ToUpper(firstLine)
+		for _, ct := range calloutTypes {
+			if strings.HasPrefix(upper, ct.marker) {
+				matchedMarker = ct.marker
+				break
+			}
+		}
+		if matchedMarker == "" {
+			return ast.WalkContinue, nil
+		}
+
+		var textNodes []*ast.Text
+		for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+			if child.Kind() == ast.KindText {
+				textNodes = append(textNodes, child.(*ast.Text))
+			}
+		}
+		if len(textNodes) < 2 {
+			return ast.WalkContinue, nil
+		}
+
+		var acc string
+		mergeCount := 0
+		for _, tn := range textNodes {
+			acc += string(tn.Segment.Value(src))
+			mergeCount++
+			if len(acc) >= len(matchedMarker) {
+				break
+			}
+		}
+		if mergeCount <= 1 {
+			return ast.WalkContinue, nil
+		}
+
+		first := textNodes[0]
+		last := textNodes[mergeCount-1]
+
+		if last.Segment.Stop > first.Segment.Stop {
+			first.Segment.Stop = last.Segment.Stop
+		}
+		if last.SoftLineBreak() {
+			first.SetSoftLineBreak(true)
+		}
+
+		for i := mergeCount - 1; i >= 1; i-- {
+			n.RemoveChild(n, textNodes[i])
+		}
+
+		return ast.WalkContinue, nil
+	})
 }

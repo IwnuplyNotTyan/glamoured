@@ -77,6 +77,9 @@ func NewTermRenderer(options ...TermRendererOption) (*TermRenderer, error) {
 			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
+				parser.WithASTTransformers(
+					util.Prioritized(&ansi.CalloutMarkerTransformer{}, 100),
+				),
 			),
 		),
 		ansiOptions: ansi.Options{
