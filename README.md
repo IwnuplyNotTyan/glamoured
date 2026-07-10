@@ -11,7 +11,7 @@ Stylesheet-based markdown rendering for your CLI apps.
 compatible terminals. You can create your own stylesheet or simply use one of
 the stylish defaults.
 
-This is an enhanced fork with additional features beyond the original.
+This is an enhanced fork with additional features beyond the [original](https://github.com/charmbracelet/glamour/).
 
 ## Enhanced Features
 
