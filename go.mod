@@ -1,6 +1,6 @@
 module glamoured
 
-go 1.25.8
+go 1.25.12
 
 require (
 	charm.land/lipgloss/v2 v2.0.4
@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf
 	github.com/charmbracelet/x/mosaic v0.0.0-20260705004817-2cc9a8fe1146
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/yuin/goldmark v1.7.8
+	github.com/yuin/goldmark v1.7.17
 	github.com/yuin/goldmark-emoji v1.0.5
 	golang.org/x/net v0.57.0
 	golang.org/x/text v0.40.0

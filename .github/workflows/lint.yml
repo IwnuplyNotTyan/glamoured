@@ -7,6 +7,7 @@ jobs:
   lint:
     uses: charmbracelet/meta/.github/workflows/lint.yml@main
     permissions:
+      contents: read
       checks: write
       pull-requests: read
     with:
