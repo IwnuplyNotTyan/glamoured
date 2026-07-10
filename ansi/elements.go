@@ -131,8 +131,8 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		}
 
 	case ast.KindListItem:
-		var l uint
-		var e uint
+		var l int
+		var e int
 		l = 1
 		n := node
 		for n.PreviousSibling() != nil && (n.PreviousSibling().Kind() == ast.KindListItem) {
@@ -142,7 +142,7 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		if node.Parent().(*ast.List).IsOrdered() {
 			e = l
 			if node.Parent().(*ast.List).Start != 1 {
-				e += uint(node.Parent().(*ast.List).Start) - 1 //nolint:gosec
+				e += node.Parent().(*ast.List).Start - 1
 			}
 		}
 
