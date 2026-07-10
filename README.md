@@ -1,8 +1,8 @@
 # Glamoured - Glamour but better
 
 <p>
-    <a href="https://github.com/iwnuplynottyan/glamoured/actions"><img src="https://github.com/iwnuplynottyan/glamour/workflows/build/badge.svg" alt="Build Status"></a>
-    <a href="https://coveralls.io/github/iwnuplynottyan/glamour?branch=master"><img src="https://coveralls.io/repos/github/iwnuplynottyan/glamour/badge.svg?branch=master" alt="Coverage Status"></a>
+    <a href="https://github.com/iwnuplynottyan/glamoured/actions"><img src="https://github.com/iwnuplynottyan/glamoured/workflows/build/badge.svg" alt="Build Status"></a>
+    <a href="https://coveralls.io/github/iwnuplynottyan/glamoured?branch=master"><img src="https://coveralls.io/repos/github/iwnuplynottyan/glamoured/badge.svg?branch=master" alt="Coverage Status"></a>
 </p>
 
 Stylesheet-based markdown rendering for your CLI apps.
