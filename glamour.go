@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/yuin/goldmark"
 	emoji "github.com/yuin/goldmark-emoji"
@@ -36,6 +38,7 @@ type TermRenderer struct {
 	ansiOptions ansi.Options
 	buf         bytes.Buffer
 	renderBuf   bytes.Buffer
+	stylePath   string
 }
 
 // Render initializes a new TermRenderer and renders a markdown with a specific
@@ -129,6 +132,7 @@ func WithEnvironmentConfig() TermRendererOption {
 // standard style.
 func WithStylePath(stylePath string) TermRendererOption {
 	return func(tr *TermRenderer) error {
+		tr.stylePath = stylePath
 		styles, err := getDefaultStyle(stylePath)
 		if err != nil {
 			jsonBytes, err := os.ReadFile(stylePath)
@@ -288,9 +292,91 @@ func (tr *TermRenderer) Render(in string) (string, error) {
 
 // RenderBytes returns the markdown rendered into a byte slice.
 func (tr *TermRenderer) RenderBytes(in []byte) ([]byte, error) {
+	inputStr := string(in)
+	processed, centerBlocks := extractCenterBlocks(inputStr)
+
 	var buf bytes.Buffer
-	err := tr.md.Convert(in, &buf)
-	return buf.Bytes(), err
+	err := tr.md.Convert([]byte(processed), &buf)
+	if err != nil {
+		return nil, err
+	}
+	result := buf.String()
+
+	ww := tr.ansiOptions.WordWrap
+	if ww <= 0 {
+		ww = defaultWidth
+	}
+	blockWidth := ww
+	m := tr.ansiOptions.Styles.Document.Margin
+	if m != nil {
+		blockWidth -= int(*m) * 2
+	}
+
+	for marker, content := range centerBlocks {
+		inner, err := Render(content, tr.stylePath)
+		if err != nil {
+			inner, err = Render(content, "dark")
+			if err != nil {
+				continue
+			}
+		}
+		centered := centerText(inner, blockWidth)
+		resultLines := strings.Split(result, "\n")
+		var newLines []string
+		for _, line := range resultLines {
+			if strings.Contains(stripANSI(line), marker) {
+				newLines = append(newLines, strings.Split(centered, "\n")...)
+			} else {
+				newLines = append(newLines, line)
+			}
+		}
+		result = strings.Join(newLines, "\n")
+	}
+
+	return []byte(result), nil
+}
+
+var centerRe = regexp.MustCompile(`(?is)<(?:center|div\s+align="?center"?)\s*>([\s\S]*?)</(?:center|div)\s*>`)
+var markerRe = regexp.MustCompile(`\x00GLAMOURCENTER\d+\x00`)
+
+func extractCenterBlocks(input string) (string, map[string]string) {
+	blocks := make(map[string]string)
+	var index int
+	result := centerRe.ReplaceAllStringFunc(input, func(match string) string {
+		index++
+		marker := fmt.Sprintf("\x00GLAMOURCENTER%d\x00", index)
+		inner := centerRe.FindStringSubmatch(match)
+		if len(inner) > 1 {
+			blocks[marker] = strings.TrimSpace(inner[1])
+		}
+		return marker
+	})
+	return result, blocks
+}
+
+var ansiPattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func stripANSI(s string) string {
+	return ansiPattern.ReplaceAllString(s, "")
+}
+
+func visibleWidth(s string) int {
+	return len([]rune(stripANSI(s)))
+}
+
+func centerText(text string, width int) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		vw := visibleWidth(line)
+		if vw >= width || vw == 0 {
+			continue
+		}
+		padding := (width - vw) / 2
+		if padding > 0 {
+			lines[i] = strings.Repeat(" ", padding) + line
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 func getEnvironmentStyle() string {
