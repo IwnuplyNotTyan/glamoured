@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"strconv"
 	"strings"
 
 	"charm.land/glamour/v2/internal/autolink"
 	east "github.com/yuin/goldmark-emoji/ast"
 	"github.com/yuin/goldmark/ast"
 	astext "github.com/yuin/goldmark/extension/ast"
+	nhtml "golang.org/x/net/html"
 )
 
 // ElementRenderer is called when entering a markdown node.
@@ -414,17 +416,41 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 	// HTML Elements
 	case ast.KindHTMLBlock:
 		n := node.(*ast.HTMLBlock)
+		raw := string(n.Text(source))
+		if src, w, h := parseHTMLImage(raw); src != "" {
+			return Element{
+				Renderer: &ImageElement{
+					BaseURL:  ctx.options.BaseURL,
+					URL:      src,
+					TextOnly: false,
+					Width:    w,
+					Height:   h,
+				},
+			}
+		}
 		return Element{
 			Renderer: &BaseElement{
-				Token: ctx.SanitizeHTML(string(n.Text(source)), true), //nolint: staticcheck
+				Token: ctx.SanitizeHTML(raw, true), //nolint: staticcheck
 				Style: ctx.options.Styles.HTMLBlock.StylePrimitive,
 			},
 		}
 	case ast.KindRawHTML:
 		n := node.(*ast.RawHTML)
+		raw := string(n.Text(source))
+		if src, w, h := parseHTMLImage(raw); src != "" {
+			return Element{
+				Renderer: &ImageElement{
+					BaseURL:  ctx.options.BaseURL,
+					URL:      src,
+					TextOnly: false,
+					Width:    w,
+					Height:   h,
+				},
+			}
+		}
 		return Element{
 			Renderer: &BaseElement{
-				Token: ctx.SanitizeHTML(string(n.Text(source)), true), //nolint: staticcheck
+				Token: ctx.SanitizeHTML(raw, true), //nolint: staticcheck
 				Style: ctx.options.Styles.HTMLSpan.StylePrimitive,
 			},
 		}
@@ -478,4 +504,37 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		fmt.Println("Warning: unhandled element", node.Kind().String())
 		return Element{}
 	}
+}
+
+// parseHTMLImage parses an HTML string looking for <img> tags.
+// Returns the src, width, height if found, otherwise empty strings/0.
+func parseHTMLImage(htmlInput string) (src string, width int, height int) {
+	doc, err := nhtml.Parse(strings.NewReader(htmlInput))
+	if err != nil {
+		return
+	}
+	var findImg func(*nhtml.Node) bool
+	findImg = func(n *nhtml.Node) bool {
+		if n.Type == nhtml.ElementNode && n.Data == "img" {
+			for _, a := range n.Attr {
+				switch a.Key {
+				case "src":
+					src = a.Val
+				case "width":
+					width, _ = strconv.Atoi(a.Val)
+				case "height":
+					height, _ = strconv.Atoi(a.Val)
+				}
+			}
+			return true
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if findImg(c) {
+				return true
+			}
+		}
+		return false
+	}
+	findImg(doc)
+	return
 }

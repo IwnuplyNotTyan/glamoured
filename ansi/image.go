@@ -20,6 +20,8 @@ type ImageElement struct {
 	URL      string
 	Child    ElementRenderer
 	TextOnly bool
+	Width    int
+	Height   int
 }
 
 func loadImage(url string) (image.Image, error) {
@@ -51,13 +53,30 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 		u := resolveRelativeURL(e.BaseURL, e.URL)
 		img, err := loadImage(u)
 		if err == nil {
-			width := ctx.options.MosaicWidth
+			width := e.Width
+			if width <= 0 {
+				width = ctx.options.MosaicWidth
+			}
 			if width <= 0 {
 				width = ctx.options.WordWrap / 2
 				if width < 20 {
 					width = 20
 				}
 			}
+<<<<<<< HEAD
+=======
+			pixelW := width * 2
+			b := img.Bounds()
+			srcW := b.Max.X - b.Min.X
+			srcH := b.Max.Y - b.Min.Y
+			pixelH := int(float64(pixelW) * float64(srcH) / float64(srcW) / 2)
+			if e.Height > 0 {
+				pixelH = e.Height * 2
+			}
+			if pixelH < 1 {
+				pixelH = 1
+			}
+>>>>>>> 2f75868 (feat: add Width/Height fields to ImageElement and parse <img> HTML tags)
 			m := mosaic.New()
 			m = m.Width(width * 2)
 			art := m.Render(img)
