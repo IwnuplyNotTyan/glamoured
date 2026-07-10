@@ -22,6 +22,7 @@ type Options struct {
 	TableWrap        *bool
 	InlineTableLinks bool
 	PreserveNewLines bool
+	NerdFontIcons    bool
 	Styles           StyleConfig
 	ChromaFormatter  string
 }

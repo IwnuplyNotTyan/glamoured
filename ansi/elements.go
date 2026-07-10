@@ -187,9 +187,10 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 
 			return Element{
 				Renderer: &CalloutElement{
-					Label: ct.icon + " " + ct.label + " ",
-					Rest:  rest,
-					Color: ct.color,
+					Label:    ct.label + " ",
+					NerdIcon: ct.nerdIcon,
+					Rest:     rest,
+					Color:    ct.color,
 				},
 			}
 		}
@@ -560,18 +561,18 @@ func parseHTMLImage(htmlInput string) (src string, width int, height int) {
 }
 
 type calloutType struct {
-	marker string
-	label  string
-	color  string
-	icon   string
+	marker   string
+	label    string
+	color    string
+	nerdIcon string
 }
 
 var calloutTypes = []calloutType{
-	{marker: "[!NOTE]", label: "Note:", color: "39", icon: "ℹ"},
-	{marker: "[!TIP]", label: "Tip:", color: "42", icon: "💡"},
-	{marker: "[!IMPORTANT]", label: "Important:", color: "129", icon: "❗"},
-	{marker: "[!WARNING]", label: "Warning:", color: "214", icon: "⚠"},
-	{marker: "[!CAUTION]", label: "Caution:", color: "196", icon: "🛑"},
+	{marker: "[!NOTE]", label: "Note:", color: "39", nerdIcon: "\uf05a"},
+	{marker: "[!TIP]", label: "Tip:", color: "42", nerdIcon: "\uf0eb"},
+	{marker: "[!IMPORTANT]", label: "Important:", color: "129", nerdIcon: "\uf06a"},
+	{marker: "[!WARNING]", label: "Warning:", color: "214", nerdIcon: "\uf071"},
+	{marker: "[!CAUTION]", label: "Caution:", color: "196", nerdIcon: "\uf057"},
 }
 
 func detectCallout(s string) *calloutType {
@@ -611,21 +612,27 @@ func colorBlockquoteIndent(ctx RenderContext, color string) {
 
 // CalloutElement renders a GitHub-style callout label.
 type CalloutElement struct {
-	Label string
-	Rest  string
-	Color string
+	Label    string
+	NerdIcon string
+	Rest     string
+	Color    string
 }
 
 // Render renders the callout label with styled text.
 func (e *CalloutElement) Render(w io.Writer, ctx RenderContext) error {
 	bs := ctx.blockStack
 
+	labelText := e.Label
+	if ctx.options.NerdFontIcons && e.NerdIcon != "" {
+		labelText = e.NerdIcon + " " + e.Label
+	}
+
 	labelStyle := StylePrimitive{
 		Color: &e.Color,
 		Bold:  boolPtr(true),
 	}
 	labelStyle = cascadeStylePrimitives(bs.Current().Style.StylePrimitive, labelStyle)
-	if _, err := renderText(w, labelStyle, e.Label); err != nil {
+	if _, err := renderText(w, labelStyle, labelText); err != nil {
 		return err
 	}
 

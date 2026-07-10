@@ -63,8 +63,6 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 					width = 20
 				}
 			}
-<<<<<<< HEAD
-=======
 			pixelW := width * 2
 			b := img.Bounds()
 			srcW := b.Max.X - b.Min.X
@@ -76,7 +74,6 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 			if pixelH < 1 {
 				pixelH = 1
 			}
->>>>>>> 2f75868 (feat: add Width/Height fields to ImageElement and parse <img> HTML tags)
 			m := mosaic.New()
 			m = m.Width(width * 2)
 			art := m.Render(img)

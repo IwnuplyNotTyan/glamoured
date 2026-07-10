@@ -244,6 +244,14 @@ func WithMosaicWidth(width int) TermRendererOption {
 	}
 }
 
+// WithNerdFontIcons enables Nerd Font icons for callout blocks (e.g., NOTE, WARNING).
+func WithNerdFontIcons() TermRendererOption {
+	return func(tr *TermRenderer) error {
+		tr.ansiOptions.NerdFontIcons = true
+		return nil
+	}
+}
+
 // WithOptions sets multiple TermRenderer options within a single TermRendererOption.
 func WithOptions(options ...TermRendererOption) TermRendererOption {
 	return func(tr *TermRenderer) error {

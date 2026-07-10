@@ -229,20 +229,25 @@ func TestCalloutBlocks(t *testing.T) {
 		t.Error("output should not contain raw [!CAUTION] marker")
 	}
 
-	if !strings.Contains(output, "ℹ Note:") {
-		t.Error("output should contain ℹ Note: label")
+	if !strings.Contains(output, "Note:") {
+		t.Error("output should contain Note: label")
 	}
-	if !strings.Contains(output, "💡 Tip:") {
-		t.Error("output should contain 💡 Tip: label")
+	if !strings.Contains(output, "Tip:") {
+		t.Error("output should contain Tip: label")
 	}
-	if !strings.Contains(output, "❗ Important:") {
-		t.Error("output should contain ❗ Important: label")
+	if !strings.Contains(output, "Important:") {
+		t.Error("output should contain Important: label")
 	}
-	if !strings.Contains(output, "⚠ Warning:") {
-		t.Error("output should contain ⚠ Warning: label")
+	if !strings.Contains(output, "Warning:") {
+		t.Error("output should contain Warning: label")
 	}
-	if !strings.Contains(output, "🛑 Caution:") {
-		t.Error("output should contain 🛑 Caution: label")
+	if !strings.Contains(output, "Caution:") {
+		t.Error("output should contain Caution: label")
+	}
+
+	// Without NerdFontIcons, icons should not be present
+	if strings.Contains(output, "\uf05a") {
+		t.Error("output should not contain Nerd Font icon without NerdFontIcons option")
 	}
 
 	if !strings.Contains(output, "\x1b[38;5;39m") {
@@ -277,6 +282,62 @@ func TestCalloutBlocks(t *testing.T) {
 	}
 	if !strings.Contains(output, "lowercase marker") {
 		t.Error("output should contain 'lowercase marker'")
+	}
+}
+
+func TestCalloutBlocksWithNerdFontIcons(t *testing.T) {
+	input := `> [!NOTE]
+> Nerd note
+`
+
+	options := Options{
+		WordWrap:      80,
+		NerdFontIcons: true,
+	}
+	err := json.Unmarshal([]byte(`{
+		"block_quote": {
+			"indent": 1,
+			"indent_token": "│ "
+		}
+	}`), &options.Styles)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			emoji.Emoji,
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+			parser.WithASTTransformers(
+				util.Prioritized(&CalloutMarkerTransformer{}, 100),
+			),
+		),
+	)
+
+	ar := NewRenderer(options)
+	md.SetRenderer(
+		renderer.NewRenderer(
+			renderer.WithNodeRenderers(util.Prioritized(ar, 1000))))
+
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(input), &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+
+	if !strings.Contains(output, "\uf05a") {
+		t.Error("output should contain Nerd Font icon when NerdFontIcons is enabled")
+	}
+	if !strings.Contains(output, "Note:") {
+		t.Error("output should contain Note: label")
+	}
+	if strings.Contains(output, "[!NOTE]") {
+		t.Error("output should not contain raw marker")
 	}
 }
 
