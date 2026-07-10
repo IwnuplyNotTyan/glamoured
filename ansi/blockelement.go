@@ -12,10 +12,10 @@ import (
 // After all children have been rendered into it, it applies indentation and
 // margins around them and writes everything to the parent rendering buffer.
 type BlockElement struct {
-	Block       *bytes.Buffer
-	Style       StyleBlock
-	Margin      bool
-	Newline     bool
+	Block        *bytes.Buffer
+	Style        StyleBlock
+	Margin       bool
+	Newline      bool
 	IsBlockquote bool
 }
 
@@ -36,7 +36,7 @@ func (e *BlockElement) Finish(w io.Writer, ctx RenderContext) error {
 	if e.Margin { //nolint: nestif
 		s := lipgloss.Wrap(
 			bs.Current().Block.String(),
-			int(bs.Width(ctx)),
+			bs.Width(ctx),
 			" ,.;-+|",
 		)
 

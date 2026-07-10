@@ -3,13 +3,13 @@ package ansi
 import (
 	"bytes"
 	"fmt"
+	"glamoured/internal/autolink"
 	"io"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 
-	"glamoured/internal/autolink"
 	xansi "github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/exp/slice"
 	"github.com/yuin/goldmark/ast"
@@ -38,7 +38,7 @@ func (e *TableElement) printTableLinks(ctx RenderContext) {
 	}
 
 	w := ctx.blockStack.Current().Block
-	termWidth := int(ctx.blockStack.Width(ctx))
+	termWidth := ctx.blockStack.Width(ctx)
 
 	renderLinkText := func(link tableLink, position, padding int) string {
 		token := strings.Repeat(" ", padding)

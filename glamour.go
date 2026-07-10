@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"glamoured/ansi"
+	"glamoured/styles"
 	"io"
 	"os"
 	"regexp"
@@ -18,9 +20,6 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/util"
-
-	"glamoured/ansi"
-	styles "glamoured/styles"
 )
 
 const (
@@ -309,7 +308,7 @@ func (tr *TermRenderer) RenderBytes(in []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	err := tr.md.Convert([]byte(processed), &buf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("glamour: error converting markdown: %w", err)
 	}
 	result := buf.String()
 
@@ -320,7 +319,7 @@ func (tr *TermRenderer) RenderBytes(in []byte) ([]byte, error) {
 	blockWidth := ww
 	m := tr.ansiOptions.Styles.Document.Margin
 	if m != nil {
-		blockWidth -= int(*m) * 2
+		blockWidth -= *m * 2
 	}
 
 	for marker, content := range centerBlocks {

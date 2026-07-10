@@ -30,8 +30,8 @@ func (s *BlockStack) Pop() {
 }
 
 // Indent returns the current indentation level of all elements in the stack.
-func (s BlockStack) Indent() uint {
-	var i uint
+func (s BlockStack) Indent() int {
+	var i int
 
 	for _, v := range s {
 		if v.Style.Indent == nil {
@@ -44,8 +44,8 @@ func (s BlockStack) Indent() uint {
 }
 
 // Margin returns the current margin level of all elements in the stack.
-func (s BlockStack) Margin() uint {
-	var i uint
+func (s BlockStack) Margin() int {
+	var i int
 
 	for _, v := range s {
 		if v.Style.Margin == nil {
@@ -58,11 +58,14 @@ func (s BlockStack) Margin() uint {
 }
 
 // Width returns the available rendering width.
-func (s BlockStack) Width(ctx RenderContext) uint {
-	if s.Indent()+s.Margin()*2 > uint(ctx.options.WordWrap) {
+func (s BlockStack) Width(ctx RenderContext) int {
+	ww := ctx.options.WordWrap
+	indent := s.Indent()
+	margin := s.Margin() * 2
+	if indent+margin > ww {
 		return 0
 	}
-	return uint(ctx.options.WordWrap) - s.Indent() - s.Margin()*2
+	return ww - indent - margin
 }
 
 // Parent returns the current BlockElement's parent.

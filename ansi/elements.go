@@ -3,17 +3,18 @@ package ansi
 import (
 	"bytes"
 	"fmt"
+	"glamoured/internal/autolink"
 	"html"
 	"io"
 	"strconv"
 	"strings"
 
-	"glamoured/internal/autolink"
 	east "github.com/yuin/goldmark-emoji/ast"
 	"github.com/yuin/goldmark/ast"
 	astext "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
+
 	nhtml "golang.org/x/net/html"
 )
 
@@ -104,7 +105,7 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 	case ast.KindList:
 		s := ctx.options.Styles.List.StyleBlock
 		if s.Indent == nil {
-			var i uint
+			var i int
 			s.Indent = &i
 		}
 		n := node.Parent()
@@ -141,7 +142,7 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		if node.Parent().(*ast.List).IsOrdered() {
 			e = l
 			if node.Parent().(*ast.List).Start != 1 {
-				e += uint(node.Parent().(*ast.List).Start) - 1
+				e += uint(node.Parent().(*ast.List).Start) - 1 //nolint:gosec
 			}
 		}
 
@@ -195,7 +196,7 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 			}
 		}
 
-		if n.HardLineBreak() || (n.SoftLineBreak()) {
+		if n.HardLineBreak() || n.SoftLineBreak() {
 			s += "\n"
 		}
 		return Element{
@@ -437,7 +438,11 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 	// HTML Elements
 	case ast.KindHTMLBlock:
 		n := node.(*ast.HTMLBlock)
-		raw := string(n.Text(source))
+		var raw string
+		for i := 0; i < n.Lines().Len(); i++ {
+			line := n.Lines().At(i)
+			raw += string(line.Value(source))
+		}
 		if src, w, h := parseHTMLImage(raw); src != "" {
 			return Element{
 				Renderer: &ImageElement{
@@ -451,13 +456,17 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		}
 		return Element{
 			Renderer: &BaseElement{
-				Token: ctx.SanitizeHTML(raw, true), //nolint: staticcheck
+				Token: ctx.SanitizeHTML(raw, true),
 				Style: ctx.options.Styles.HTMLBlock.StylePrimitive,
 			},
 		}
 	case ast.KindRawHTML:
 		n := node.(*ast.RawHTML)
-		raw := string(n.Text(source))
+		var raw string
+		for i := 0; i < n.Segments.Len(); i++ {
+			seg := n.Segments.At(i)
+			raw += string(seg.Value(source))
+		}
 		if src, w, h := parseHTMLImage(raw); src != "" {
 			return Element{
 				Renderer: &ImageElement{
@@ -471,7 +480,7 @@ func (tr *ANSIRenderer) NewElement(node ast.Node, source []byte) Element {
 		}
 		return Element{
 			Renderer: &BaseElement{
-				Token: ctx.SanitizeHTML(raw, true), //nolint: staticcheck
+				Token: ctx.SanitizeHTML(raw, true),
 				Style: ctx.options.Styles.HTMLSpan.StylePrimitive,
 			},
 		}
@@ -652,9 +661,10 @@ func boolPtr(b bool) *bool { return &b }
 // split by the parser into separate text nodes.
 type CalloutMarkerTransformer struct{}
 
-func (t *CalloutMarkerTransformer) Transform(doc *ast.Document, reader text.Reader, pc parser.Context) {
+// Transform merges callout markers split by the parser into separate text nodes.
+func (t *CalloutMarkerTransformer) Transform(doc *ast.Document, reader text.Reader, _ parser.Context) {
 	src := reader.Source()
-	ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+	_ = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering || n.Kind() != ast.KindParagraph {
 			return ast.WalkContinue, nil
 		}

@@ -10,11 +10,11 @@ var TokyoNightStyleConfig = ansi.StyleConfig{
 			BlockSuffix: "\n",
 			Color:       stringPtr("#a9b1d6"),
 		},
-		Margin: uintPtr(defaultMargin),
+		Margin: intPtr(defaultMargin),
 	},
 	BlockQuote: ansi.StyleBlock{
 		StylePrimitive: ansi.StylePrimitive{},
-		Indent:         uintPtr(1),
+		Indent:         intPtr(1),
 		IndentToken:    stringPtr("│ "),
 	},
 	List: ansi.StyleList{
@@ -113,7 +113,7 @@ var TokyoNightStyleConfig = ansi.StyleConfig{
 			StylePrimitive: ansi.StylePrimitive{
 				Color: stringPtr("#ff9e64"),
 			},
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		Chroma: &ansi.Chroma{
 			Text: ansi.StylePrimitive{

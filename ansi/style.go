@@ -67,9 +67,9 @@ type StyleTask struct {
 // StyleBlock holds the basic style settings for block elements.
 type StyleBlock struct {
 	StylePrimitive
-	Indent      *uint   `json:"indent,omitempty"`
+	Indent      *int    `json:"indent,omitempty"`
 	IndentToken *string `json:"indent_token,omitempty"`
-	Margin      *uint   `json:"margin,omitempty"`
+	Margin      *int    `json:"margin,omitempty"`
 }
 
 // StyleCodeBlock holds the style settings for a code block.
@@ -82,7 +82,7 @@ type StyleCodeBlock struct {
 // StyleList holds the style settings for a list.
 type StyleList struct {
 	StyleBlock
-	LevelIndent uint `json:"level_indent,omitempty"`
+	LevelIndent int `json:"level_indent,omitempty"`
 }
 
 // StyleTable holds the style settings for a table.

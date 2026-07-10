@@ -43,11 +43,11 @@ var (
 				BlockPrefix: "\n",
 				BlockSuffix: "\n",
 			},
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		BlockQuote: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{},
-			Indent:         uintPtr(1),
+			Indent:         intPtr(1),
 			IndentToken:    stringPtr("| "),
 		},
 		Paragraph: ansi.StyleBlock{
@@ -130,7 +130,7 @@ var (
 		},
 		CodeBlock: ansi.StyleCodeBlock{
 			StyleBlock: ansi.StyleBlock{
-				Margin: uintPtr(defaultMargin),
+				Margin: intPtr(defaultMargin),
 			},
 		},
 		Table: ansi.StyleTable{
@@ -151,11 +151,11 @@ var (
 				BlockSuffix: "\n",
 				Color:       stringPtr("252"),
 			},
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		BlockQuote: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{},
-			Indent:         uintPtr(1),
+			Indent:         intPtr(1),
 			IndentToken:    stringPtr("│ "),
 		},
 		List: ansi.StyleList{
@@ -257,7 +257,7 @@ var (
 				StylePrimitive: ansi.StylePrimitive{
 					Color: stringPtr("244"),
 				},
-				Margin: uintPtr(defaultMargin),
+				Margin: intPtr(defaultMargin),
 			},
 			Chroma: &ansi.Chroma{
 				Text: ansi.StylePrimitive{
@@ -361,11 +361,11 @@ var (
 				BlockSuffix: "\n",
 				Color:       stringPtr("234"),
 			},
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		BlockQuote: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{},
-			Indent:         uintPtr(1),
+			Indent:         intPtr(1),
 			IndentToken:    stringPtr("│ "),
 		},
 		List: ansi.StyleList{
@@ -466,7 +466,7 @@ var (
 				StylePrimitive: ansi.StylePrimitive{
 					Color: stringPtr("242"),
 				},
-				Margin: uintPtr(defaultMargin),
+				Margin: intPtr(defaultMargin),
 			},
 			Chroma: &ansi.Chroma{
 				Text: ansi.StylePrimitive{
@@ -565,10 +565,10 @@ var (
 	// PinkStyleConfig is the default pink style.
 	PinkStyleConfig = ansi.StyleConfig{
 		Document: ansi.StyleBlock{
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		BlockQuote: ansi.StyleBlock{
-			Indent:      uintPtr(1),
+			Indent:      intPtr(1),
 			IndentToken: stringPtr("│ "),
 		},
 		List: ansi.StyleList{
@@ -688,4 +688,4 @@ var (
 
 func boolPtr(b bool) *bool       { return &b }
 func stringPtr(s string) *string { return &s }
-func uintPtr(u uint) *uint       { return &u }
+func intPtr(i int) *int          { return &i }

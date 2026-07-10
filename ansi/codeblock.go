@@ -65,9 +65,8 @@ func chromaStyle(style StylePrimitive) string {
 // Render renders a CodeBlockElement.
 func (e *CodeBlockElement) Render(w io.Writer, ctx RenderContext) error {
 	bs := ctx.blockStack
-
-	var indentation uint
-	var margin uint
+	var indentation int
+	var margin int
 	formatter := chromaFormatter
 	rules := ctx.options.Styles.CodeBlock
 	if rules.Indent != nil {
@@ -125,7 +124,7 @@ func (e *CodeBlockElement) Render(w io.Writer, ctx RenderContext) error {
 		mutex.Unlock()
 	}
 
-	iw := NewIndentWriter(w, int(indentation+margin), func(_ io.Writer) {
+	iw := NewIndentWriter(w, indentation+margin, func(_ io.Writer) {
 		_, _ = renderText(w, bs.Current().Style.StylePrimitive, " ")
 	})
 	defer iw.Close() //nolint:errcheck

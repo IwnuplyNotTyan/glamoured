@@ -10,14 +10,14 @@ var DraculaStyleConfig = ansi.StyleConfig{
 			BlockSuffix: "\n",
 			Color:       stringPtr("#f8f8f2"),
 		},
-		Margin: uintPtr(defaultMargin),
+		Margin: intPtr(defaultMargin),
 	},
 	BlockQuote: ansi.StyleBlock{
 		StylePrimitive: ansi.StylePrimitive{
 			Color:  stringPtr("#f1fa8c"),
 			Italic: boolPtr(true),
 		},
-		Indent: uintPtr(defaultMargin),
+		Indent: intPtr(defaultMargin),
 	},
 	List: ansi.StyleList{
 		LevelIndent: defaultMargin,
@@ -116,7 +116,7 @@ var DraculaStyleConfig = ansi.StyleConfig{
 			StylePrimitive: ansi.StylePrimitive{
 				Color: stringPtr("#ffb86c"),
 			},
-			Margin: uintPtr(defaultMargin),
+			Margin: intPtr(defaultMargin),
 		},
 		Chroma: &ansi.Chroma{
 			Text: ansi.StylePrimitive{
