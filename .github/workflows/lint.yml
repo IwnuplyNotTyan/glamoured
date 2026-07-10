@@ -6,5 +6,8 @@ on:
 jobs:
   lint:
     uses: charmbracelet/meta/.github/workflows/lint.yml@main
+    permissions:
+      checks: write
+      pull-requests: read
     with:
       golangci_path: .golangci.yml
