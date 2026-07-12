@@ -344,7 +344,7 @@ func (tr *TermRenderer) RenderBytes(in []byte) ([]byte, error) {
 	}
 
 	for marker, content := range centerBlocks {
-		inner, err := Render(content, tr.stylePath)
+		inner, err := tr.renderCenterBlock(content)
 		if err != nil {
 			inner, err = Render(content, "dark")
 			if err != nil {
@@ -392,6 +392,22 @@ func stripANSI(s string) string {
 
 func visibleWidth(s string) int {
 	return len([]rune(stripANSI(s)))
+}
+
+// renderCenterBlock renders content for use inside a centered block,
+// preserving all TermRenderer options from the parent (ShieldsBadges, etc.).
+func (tr *TermRenderer) renderCenterBlock(content string) (string, error) {
+	r, err := NewTermRenderer(
+		WithStylePath(tr.stylePath),
+		func(inner *TermRenderer) error {
+			inner.ansiOptions = tr.ansiOptions
+			return nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+	return r.Render(content)
 }
 
 func centerText(text string, width int) string {
