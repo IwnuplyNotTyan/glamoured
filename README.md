@@ -92,6 +92,25 @@ r, _ := glamour.NewTermRenderer(
 This renders `  Note:`, `  Tip:`, `  Important:`, `  Warning:`, `  Caution:`
 (requires a [Nerd Font](https://www.nerdfonts.com/) in your terminal).
 
+### Shields.io Badge Rendering
+
+Detect `img.shields.io` badge URLs and render them as styled one-line ANSI badges:
+
+```go
+r, _ := glamour.NewTermRenderer(
+    glamour.WithStandardStyle("dark"),
+)
+
+out, _ := r.Render("![Go](https://img.shields.io/badge/Go-1.21-blue)")
+fmt.Print(out)
+```
+
+Output shows a colored badge: dark grey label segment + colored message segment.
+
+- Enable Nerd Font icon via logo query param (`?logo=go`) and `WithNerdFontIcons()`
+- Disable entirely: `glamour.WithShieldsBadges(false)`
+- Badges are rendered before mosaic processing; non-shield URLs fall through normally
+
 ## Base Usage
 
 ```go
@@ -139,6 +158,7 @@ fmt.Print(out)
 | `WithPreservedNewLines()` | Preserve newlines in output |
 | `WithBaseURL(url)` | Set base URL for relative links |
 | `WithChromaFormatter(name)` | Set syntax highlighting formatter |
+| `WithShieldsBadges(enabled)` | Enable/disable shields.io badge rendering (default: enabled) |
 
 ### Color Downsampling
 
