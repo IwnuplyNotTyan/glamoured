@@ -85,3 +85,55 @@ func TestParseShieldsURL(t *testing.T) {
 		}
 	}
 }
+
+func TestBadgeNamedColor(t *testing.T) {
+	tests := []struct {
+		name string
+		want int
+	}{
+		{"brightgreen", 2},
+		{"blue", 32},
+		{"red", 196},
+		{"unknown", 240},
+	}
+	for _, tt := range tests {
+		got := badgeNamedColor(tt.name)
+		if got != tt.want {
+			t.Errorf("badgeNamedColor(%q) = %d, want %d", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestHexToANSI(t *testing.T) {
+	tests := []struct {
+		hex  string
+		want int
+	}{
+		{"000000", 16},
+		{"ffffff", 231},
+		{"ff0000", 196},
+	}
+	for _, tt := range tests {
+		got := hexToANSI(tt.hex)
+		if got != tt.want {
+			t.Errorf("hexToANSI(%q) = %d, want %d", tt.hex, got, tt.want)
+		}
+	}
+}
+
+func TestLogoNerdIcon(t *testing.T) {
+	tests := []struct {
+		logo string
+		want string
+	}{
+		{"go", "\ue61b"},
+		{"", ""},
+		{"unknown", "\uf0a3"},
+	}
+	for _, tt := range tests {
+		got := logoNerdIcon(tt.logo)
+		if got != tt.want {
+			t.Errorf("logoNerdIcon(%q) = %q, want %q", tt.logo, got, tt.want)
+		}
+	}
+}

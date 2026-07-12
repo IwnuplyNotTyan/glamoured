@@ -2,6 +2,7 @@ package ansi
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -48,4 +49,111 @@ func decodeShieldsValue(s string) string {
 	s = strings.ReplaceAll(s, "_", " ")
 	s = strings.ReplaceAll(s, "\x01", "_")
 	return s
+}
+
+// Named shields.io colors mapped to ANSI 256-color codes.
+// Derived from https://shields.io/badges
+var badgeNamedColors = map[string]int{
+	"brightgreen": 2,   // #44CC11
+	"green":       106, // #97CA00
+	"yellowgreen": 142, // #A4A61D
+	"yellow":      214, // #DFB317
+	"orange":      208, // #FE7D37
+	"red":         196, // #E05D44
+	"blue":        32,  // #007EC6
+	"lightgrey":   250, // #9F9F9F
+	"grey":        240, // #555555
+	"blueviolet":  99,  // #800080
+	"pink":        205, // #E04E8C
+	"cyan":        39,  // #00BFFF
+	"purple":      93,  // #8A2BE2
+}
+
+func badgeNamedColor(name string) int {
+	if c, ok := badgeNamedColors[name]; ok {
+		return c
+	}
+	return 240 // default dark grey
+}
+
+func hexToANSI(hex string) int {
+	if len(hex) != 6 {
+		return 240
+	}
+	r := parseHexByte(hex[0:2])
+	g := parseHexByte(hex[2:4])
+	b := parseHexByte(hex[4:6])
+	return closestANSI256(r, g, b)
+}
+
+func parseHexByte(s string) byte {
+	b, _ := strconv.ParseUint(s, 16, 8)
+	return byte(b)
+}
+
+// closestANSI256 returns the closest ANSI 256-color code to the given RGB.
+func closestANSI256(r, g, b byte) int {
+	// 6×6×6 color cube: 16 + 36*r + 6*g + b
+	cr := int(r) * 5 / 255
+	cg := int(g) * 5 / 255
+	cb := int(b) * 5 / 255
+	return 16 + 36*cr + 6*cg + cb
+}
+
+// logoNerdIcon maps shields.io logo names to Nerd Font Unicode codepoints.
+func logoNerdIcon(logo string) string {
+	if logo == "" {
+		return ""
+	}
+	if icon, ok := badgeLogoIcons[strings.ToLower(logo)]; ok {
+		return icon
+	}
+	return "\uf0a3" // generic certificate icon
+}
+
+// badgeLogoIcons maps logo names to Nerd Font icon strings.
+// Uses Font Awesome and Devicons codepoints from the Nerd Font PUA range.
+var badgeLogoIcons = map[string]string{
+	"go":         "\ue61b",
+	"golang":     "\ue61b",
+	"rust":       "\ue7a8",
+	"python":     "\ue73c",
+	"node":       "\ue718",
+	"nodejs":     "\ue718",
+	"javascript": "\ue74e",
+	"js":         "\ue74e",
+	"typescript": "\ue628",
+	"ts":         "\ue628",
+	"docker":     "\ue7b0",
+	"github":     "\uf09b",
+	"git":        "\uf1d3",
+	"react":      "\ue7ba",
+	"vue":        "\ue6d0",
+	"angular":    "\ue753",
+	"ruby":       "\ue739",
+	"java":       "\ue738",
+	"kotlin":     "\ue634",
+	"swift":      "\ue755",
+	"php":        "\ue73d",
+	"c":          "\ue708",
+	"cpp":        "\ue708",
+	"c++":        "\ue708",
+	"zig":        "\ue6a9",
+	"deno":       "\ue60f",
+	"discord":    "\uf392",
+	"slack":      "\uf198",
+	"nginx":      "\ue776",
+	"redis":      "\ue76d",
+	"postgresql": "\ue76e",
+	"postgres":   "\ue76e",
+	"mysql":      "\ue704",
+	"mongodb":    "\ue7a4",
+	"aws":        "\ue7ad",
+	"amazon":     "\ue7ad",
+	"linkedin":   "\uf0e1",
+	"twitter":    "\uf099",
+	"x":          "\ue619",
+	"youtube":    "\uf167",
+	"npm":        "\ue71e",
+	"license":    "\uf0a3",
 }
