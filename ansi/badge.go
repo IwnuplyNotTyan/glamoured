@@ -77,8 +77,16 @@ func badgeNamedColor(name string) int {
 }
 
 func hexToANSI(hex string) int {
+	if len(hex) == 7 && hex[0] == '#' {
+		hex = hex[1:]
+	}
 	if len(hex) != 6 {
 		return 240
+	}
+	for _, c := range hex {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return 240
+		}
 	}
 	r := parseHexByte(hex[0:2])
 	g := parseHexByte(hex[2:4])

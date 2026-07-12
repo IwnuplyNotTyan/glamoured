@@ -112,6 +112,9 @@ func TestHexToANSI(t *testing.T) {
 		{"000000", 16},
 		{"ffffff", 231},
 		{"ff0000", 196},
+		{"invalid", 240},
+		{"ff", 240},
+		{"#ff0000", 196},
 	}
 	for _, tt := range tests {
 		got := hexToANSI(tt.hex)
