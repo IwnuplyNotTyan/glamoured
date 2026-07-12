@@ -24,8 +24,8 @@ type Options struct {
 	PreserveNewLines bool
 	NerdFontIcons    bool
 	Styles           StyleConfig
-	ChromaFormatter  string
-	MaxImageHeight   int
+	ChromaFormatter   string
+	MosaicMaxHeight   int
 }
 
 // ANSIRenderer renders markdown content as ANSI escaped sequences.

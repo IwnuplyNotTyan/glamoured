@@ -244,11 +244,11 @@ func WithMosaicWidth(width int) TermRendererOption {
 	}
 }
 
-// WithMaxImageHeight sets the maximum height in character cells for mosaic images.
+// WithMosaicMaxHeight sets the maximum height in character cells for mosaic images.
 // Images taller than this are proportionally scaled down.
-func WithMaxImageHeight(height int) TermRendererOption {
+func WithMosaicMaxHeight(height int) TermRendererOption {
 	return func(tr *TermRenderer) error {
-		tr.ansiOptions.MaxImageHeight = height
+		tr.ansiOptions.MosaicMaxHeight = height
 		return nil
 	}
 }

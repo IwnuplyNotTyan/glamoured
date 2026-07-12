@@ -73,7 +73,7 @@ func (e *ImageElement) tryRenderMosaic(w io.Writer, ctx RenderContext) bool {
 		return false
 	}
 	width := e.widthCells(ctx)
-	if maxH := ctx.options.MaxImageHeight; maxH > 0 {
+	if maxH := ctx.options.MosaicMaxHeight; maxH > 0 {
 		width = scaleToMaxHeight(img, width, maxH)
 	}
 	b := img.Bounds()
