@@ -200,6 +200,46 @@ func logoNerdIcon(logo string) string {
 	return "\uf0a3" // generic certificate icon
 }
 
+// shieldFallbackLabel extracts a meaningful label and message from a shields.io URL
+// when SVG fetching/parsing fails. Handles paths like:
+//
+//	/github/stars/USER/REPO          → label="stars", message="USER/REPO"
+//	/github/license/USER/REPO        → label="license", message="USER/REPO"
+//	/github/actions/workflow/...     → label="build"
+//	/github/v/release/...            → label="release"
+func shieldFallbackLabel(rawURL string) (label, message string) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", ""
+	}
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	// Check for specific known patterns
+	for i, p := range parts {
+		switch p {
+		case "actions":
+			if i+1 < len(parts) && parts[i+1] == "workflow" {
+				return "build", ""
+			}
+		case "v":
+			if i+1 < len(parts) && parts[i+1] == "release" {
+				return "release", ""
+			}
+		}
+	}
+	// Generic: skip common prefixes, use first meaningful segment
+	for _, p := range parts {
+		switch p {
+		case "github", "img", "shields", "io", "badge", "workflow", "status":
+			continue
+		}
+		label = p
+		label = strings.ReplaceAll(label, "-", " ")
+		label = strings.ReplaceAll(label, "_", " ")
+		return label, ""
+	}
+	return "", ""
+}
+
 // renderBadge writes a shields.io-style badge to w.
 // Format: \n[grey bg white fg] icon? LABEL [color bg white fg] MESSAGE [reset]
 func renderBadge(w io.Writer, label, message string, color int, icon string) {

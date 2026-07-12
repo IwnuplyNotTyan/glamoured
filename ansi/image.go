@@ -152,7 +152,12 @@ func (e *ImageElement) tryRenderBadge(w io.Writer, ctx RenderContext) bool {
 	// Dynamic badge: fetch SVG and extract info
 	label, msg, ansiColor, ok := fetchShieldsBadge(u)
 	if !ok {
-		return false
+		// Fallback: extract label from URL path
+		label, msg = shieldFallbackLabel(u)
+		if label == "" {
+			return false
+		}
+		ansiColor = 32 // blue
 	}
 	renderBadge(w, label, msg, ansiColor, "")
 	return true
