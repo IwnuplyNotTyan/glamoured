@@ -85,6 +85,7 @@ func NewTermRenderer(options ...TermRendererOption) (*TermRenderer, error) {
 		ansiOptions: ansi.Options{
 			WordWrap:      defaultWidth,
 			MosaicEnabled: true,
+			ShieldsBadges: true,
 			Styles:        *styles.DefaultStyles["dark"],
 		},
 	}
@@ -250,6 +251,15 @@ func WithMosaicWidth(width int) TermRendererOption {
 func WithMosaicMaxHeight(height int) TermRendererOption {
 	return func(tr *TermRenderer) error {
 		tr.ansiOptions.MosaicMaxHeight = height
+		return nil
+	}
+}
+
+// WithShieldsBadges enables or disables shields.io badge rendering.
+// Badges are rendered as one-line ANSI colored segments instead of mosaic images.
+func WithShieldsBadges(enabled bool) TermRendererOption {
+	return func(tr *TermRenderer) error {
+		tr.ansiOptions.ShieldsBadges = enabled
 		return nil
 	}
 }

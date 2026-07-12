@@ -282,6 +282,24 @@ func ExampleASCIIStyleConfig() {
 	// ...Cell.5...............................|.Cell.6..............................
 }
 
+func TestWithShieldsBadges(t *testing.T) {
+	r, err := NewTermRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !r.ansiOptions.ShieldsBadges {
+		t.Error("expected ShieldsBadges to default to true")
+	}
+
+	r2, err := NewTermRenderer(WithShieldsBadges(false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r2.ansiOptions.ShieldsBadges {
+		t.Error("expected ShieldsBadges to be false")
+	}
+}
+
 func TestWithChromaFormatterDefault(t *testing.T) {
 	r, err := NewTermRenderer(
 		WithStandardStyle(styles.DarkStyle),

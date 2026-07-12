@@ -26,6 +26,7 @@ type Options struct {
 	Styles           StyleConfig
 	ChromaFormatter  string
 	MosaicMaxHeight  int
+	ShieldsBadges    bool
 }
 
 // ANSIRenderer renders markdown content as ANSI escaped sequences.
