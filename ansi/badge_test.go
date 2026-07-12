@@ -62,6 +62,36 @@ func TestParseShieldsURL(t *testing.T) {
 			url:   "https://img.shields.io/badge/",
 			wantOK: false,
 		},
+		{
+			url:   "https://img.shields.io/badge/Go-1.21-007ec6?logo=go",
+			wantLabel: "Go",
+			wantMsg:   "1.21",
+			wantColor: "007ec6",
+			wantLogo:  "go",
+			wantOK:    true,
+		},
+		{
+			url:   "https://img.shields.io/badge/one--two-v3--4--5-blue",
+			wantLabel: "one-two",
+			wantMsg:   "v3-4-5",
+			wantColor: "blue",
+			wantOK:    true,
+		},
+		{
+			url:   "https://img.shields.io/badge/Go-1.21.3-blue",
+			wantLabel: "Go",
+			wantMsg:   "1.21.3",
+			wantColor: "blue",
+			wantOK:    true,
+		},
+		{
+			url:   "https://img.shields.io/badge/one-two-three-blue",
+			wantOK: false,
+		},
+		{
+			url:   "https://img.shields.io/badge/a-b",
+			wantOK: false,
+		},
 	}
 	for _, tt := range tests {
 		label, msg, color, logo, ok := parseShieldsURL(tt.url)

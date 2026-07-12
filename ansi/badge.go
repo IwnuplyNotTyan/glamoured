@@ -22,19 +22,25 @@ func parseShieldsURL(rawURL string) (label, message, color, logo string, ok bool
 	if path == u.Path || path == "" {
 		return "", "", "", "", false
 	}
-	// Protect literal dashes (--) before splitting on single dash
+	// Literal dashes in values are encoded as --.
+	// After replacing -- with sentinel, ALL remaining dashes are field separators.
 	path = strings.ReplaceAll(path, "--", "\x00")
-	parts := strings.Split(path, "-")
-	// Restore dashes in each part
-	for i := range parts {
-		parts[i] = strings.ReplaceAll(parts[i], "\x00", "-")
-	}
-	if len(parts) < 3 {
+	firstSep := strings.IndexByte(path, '-')
+	if firstSep < 0 {
 		return "", "", "", "", false
 	}
-	color = parts[len(parts)-1]
-	message = parts[len(parts)-2]
-	label = strings.Join(parts[:len(parts)-2], "-")
+	secondSep := strings.IndexByte(path[firstSep+1:], '-')
+	if secondSep < 0 {
+		return "", "", "", "", false
+	}
+	secondSep += firstSep + 1
+	// Ensure no extra separators remain
+	if strings.IndexByte(path[secondSep+1:], '-') >= 0 {
+		return "", "", "", "", false
+	}
+	label = strings.ReplaceAll(path[:firstSep], "\x00", "-")
+	message = strings.ReplaceAll(path[firstSep+1:secondSep], "\x00", "-")
+	color = path[secondSep+1:]
 	// Decode underscores in label and message
 	label = decodeShieldsValue(label)
 	message = decodeShieldsValue(message)
