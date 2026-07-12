@@ -1,12 +1,85 @@
 package ansi
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
+
+var (
+	shieldTitleRe  = regexp.MustCompile(`<title>([^:]+): ([^<]*)</title>`)
+	shieldAriaRe   = regexp.MustCompile(`aria-label="([^:]+): ([^"]*)"`)
+	shieldFillRe   = regexp.MustCompile(`<rect[^>]*fill="([^"]+)"`)
+)
+
+// isShieldsURL reports whether the URL points to shields.io.
+func isShieldsURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	return err == nil && u.Host == "img.shields.io"
+}
+
+// fetchShieldsBadge fetches a shields.io SVG badge and extracts label, message, and color.
+// Used for dynamic badges (e.g. /github/license/...) that can't be parsed from URL alone.
+func fetchShieldsBadge(rawURL string) (label, message string, color int, ok bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return "", "", 0, false
+	}
+	req.Header.Set("Accept", "image/svg+xml")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", "", 0, false
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", 0, false
+	}
+	// Extract label and message from <title>LABEL: MESSAGE</title> or aria-label
+	m := shieldTitleRe.FindSubmatch(body)
+	if m == nil {
+		m = shieldAriaRe.FindSubmatch(body)
+	}
+	if m == nil {
+		return "", "", 0, false
+	}
+	label = string(m[1])
+	message = string(m[2])
+	// Extract message background color from second <rect fill="COLOR">
+	fills := shieldFillRe.FindAllSubmatch(body, -1)
+	if len(fills) < 2 {
+		return "", "", 0, false
+	}
+	colorStr := string(fills[1][1])
+	return label, message, parseShieldsColor(colorStr), true
+}
+
+// parseShieldsColor converts a shields.io color string (named or hex) to ANSI 256.
+func parseShieldsColor(s string) int {
+	s = strings.TrimSpace(s)
+	if c, ok := badgeNamedColors[strings.ToLower(s)]; ok {
+		return c
+	}
+	s = strings.TrimPrefix(s, "#")
+	if len(s) == 6 && isHex(s) {
+		return hexToANSI(s)
+	}
+	if len(s) == 3 {
+		s = string([]byte{s[0], s[0], s[1], s[1], s[2], s[2]})
+		if isHex(s) {
+			return hexToANSI(s)
+		}
+	}
+	return 240
+}
 
 // parseShieldsURL parses a shields.io static badge URL.
 // Returns label, message, color, logo name, and whether parsing succeeded.

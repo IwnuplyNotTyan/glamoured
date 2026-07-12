@@ -5,6 +5,45 @@ import (
 	"testing"
 )
 
+func TestIsShieldsURL(t *testing.T) {
+	tests := []struct {
+		url  string
+		want bool
+	}{
+		{"https://img.shields.io/badge/Go-1.21-blue", true},
+		{"https://img.shields.io/github/license/owner/repo", true},
+		{"https://example.com/image.png", false},
+		{"not-a-url", false},
+	}
+	for _, tt := range tests {
+		got := isShieldsURL(tt.url)
+		if got != tt.want {
+			t.Errorf("isShieldsURL(%q) = %v, want %v", tt.url, got, tt.want)
+		}
+	}
+}
+
+func TestParseShieldsColor(t *testing.T) {
+	tests := []struct {
+		color string
+		want  int
+	}{
+		{"blue", 32},
+		{"#007ec6", 31},
+		{"007ec6", 31},
+		{"ff0000", 196},
+		{"f00", 196},
+		{"#f00", 196},
+		{"unknown", 240},
+	}
+	for _, tt := range tests {
+		got := parseShieldsColor(tt.color)
+		if got != tt.want {
+			t.Errorf("parseShieldsColor(%q) = %d, want %d", tt.color, got, tt.want)
+		}
+	}
+}
+
 func TestParseShieldsURL(t *testing.T) {
 	tests := []struct {
 		url       string
