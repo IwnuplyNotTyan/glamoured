@@ -72,27 +72,19 @@ func (e *ImageElement) tryRenderMosaic(w io.Writer, ctx RenderContext) bool {
 	if err != nil {
 		return false
 	}
-	width := e.Width
-	if width > 0 {
-		width /= pixelsPerCell
-		if width < 1 {
-			width = 1
-		}
-		if ctx.options.MosaicWidth > 0 && width > ctx.options.MosaicWidth {
-			width = ctx.options.MosaicWidth
-		}
+	width := e.widthCells(ctx)
+	if maxH := ctx.options.MaxImageHeight; maxH > 0 {
+		width = scaleToMaxHeight(img, width, maxH)
 	}
-	if width <= 0 {
-		width = ctx.options.MosaicWidth
+	b := img.Bounds()
+	srcW, srcH := b.Dx(), b.Dy()
+	outW := width * 2
+	outH := outW * srcH / srcW / 2
+	if outH < 1 {
+		outH = 1
 	}
-	if width <= 0 {
-		width = ctx.options.WordWrap / 2
-		if width < 20 {
-			width = 20
-		}
-	}
-	maxH := ctx.options.MaxImageHeight
-	art := renderMosaic(img, width, maxH)
+	m := mosaic.New().Width(outW).Height(outH)
+	art := m.Render(img)
 	el := &BaseElement{
 		Token: art,
 		Style: ctx.options.Styles.Image,
@@ -100,23 +92,44 @@ func (e *ImageElement) tryRenderMosaic(w io.Writer, ctx RenderContext) bool {
 	return el.Render(w, ctx) == nil
 }
 
-func renderMosaic(img image.Image, widthCells, maxHeight int) string {
-	m := mosaic.New()
-	m = m.Width(widthCells * 2)
-	art := m.Render(img)
-	if maxHeight > 0 {
-		lines := strings.Count(art, "\n")
-		if lines > maxHeight {
-			newWidth := widthCells * maxHeight / lines
-			if newWidth < 1 {
-				newWidth = 1
-			}
-			m = mosaic.New()
-			m = m.Width(newWidth * 2)
-			art = m.Render(img)
+func (e *ImageElement) widthCells(ctx RenderContext) int {
+	if e.Width > 0 {
+		w := e.Width / pixelsPerCell
+		if w < 1 {
+			w = 1
 		}
+		if ctx.options.MosaicWidth > 0 && w > ctx.options.MosaicWidth {
+			w = ctx.options.MosaicWidth
+		}
+		return w
 	}
-	return art
+	if ctx.options.MosaicWidth > 0 {
+		return ctx.options.MosaicWidth
+	}
+	w := ctx.options.WordWrap / 2
+	if w < 20 {
+		w = 20
+	}
+	return w
+}
+
+// scaleToMaxHeight reduces width proportionally so the rendered image
+// height does not exceed maxHeight. Uses source image aspect ratio.
+func scaleToMaxHeight(img image.Image, widthCells, maxHeight int) int {
+	b := img.Bounds()
+	srcW, srcH := b.Dx(), b.Dy()
+	if srcW <= 0 || srcH <= 0 {
+		return widthCells
+	}
+	// Mosaic auto-height formula:
+	//   outWidth = widthCells * 2
+	//   outHeight = outWidth * srcH / srcW / 2  (divider=2 for cell aspect ratio)
+	//   cellHeight = outHeight / 2 = widthCells * srcH / (2 * srcW)
+	expH := widthCells * srcH / (2 * srcW)
+	if expH > maxHeight {
+		return widthCells * maxHeight / expH
+	}
+	return widthCells
 }
 
 // Render renders an ImageElement.
