@@ -430,6 +430,8 @@ func stripANSI(s string) string {
 
 // renderCenterBlock renders content for use inside a centered block,
 // preserving all TermRenderer options from the parent (ShieldsBadges, etc.).
+// Uses a wide word wrap and no margin so PaddingWriter doesn't pad
+// lines, allowing centerText to add proper centering padding.
 func (tr *TermRenderer) renderCenterBlock(content string) (string, error) {
 	var opts []TermRendererOption
 	if tr.stylePath != "" {
@@ -440,7 +442,7 @@ func (tr *TermRenderer) renderCenterBlock(content string) (string, error) {
 			return nil
 		})
 	}
-	opts = append(opts, func(inner *TermRenderer) error {
+	copyOpts := func(inner *TermRenderer) error {
 		inner.ansiOptions.WordWrap = tr.ansiOptions.WordWrap
 		inner.ansiOptions.MosaicEnabled = tr.ansiOptions.MosaicEnabled
 		inner.ansiOptions.MosaicWidth = tr.ansiOptions.MosaicWidth
@@ -452,8 +454,13 @@ func (tr *TermRenderer) renderCenterBlock(content string) (string, error) {
 		inner.ansiOptions.MosaicMaxHeight = tr.ansiOptions.MosaicMaxHeight
 		inner.ansiOptions.ShieldsBadges = tr.ansiOptions.ShieldsBadges
 		inner.ansiOptions.BaseURL = tr.ansiOptions.BaseURL
+		// Zero word wrap + no margin prevents PaddingWriter from padding lines,
+		// while lipgloss.Wrap with width 0 preserves content as-is
+		inner.ansiOptions.WordWrap = 0
+		inner.ansiOptions.Styles.Document.Margin = nil
 		return nil
-	})
+	}
+	opts = append(opts, copyOpts)
 	r, err := NewTermRenderer(opts...)
 	if err != nil {
 		return "", err
@@ -461,13 +468,14 @@ func (tr *TermRenderer) renderCenterBlock(content string) (string, error) {
 	return r.Render(content)
 }
 
+func visibleWidth(s string) int {
+	return len([]rune(stripANSI(s)))
+}
+
 func centerText(text string, width int) string {
 	lines := strings.Split(text, "\n")
 	for i, line := range lines {
-		// Strip trailing spaces (including ANSI-styled pad spaces from MarginWriter)
-		clean := stripANSI(line)
-		trimmed := strings.TrimRight(clean, " ")
-		vw := len([]rune(trimmed))
+		vw := visibleWidth(line)
 		if vw >= width || vw == 0 {
 			continue
 		}
