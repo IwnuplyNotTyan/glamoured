@@ -15,15 +15,18 @@ type RenderContext struct {
 	table      *TableElement
 
 	stripper *bluemonday.Policy
+
+	hasParagraphImage *bool
 }
 
 // NewRenderContext returns a new RenderContext.
 func NewRenderContext(options Options) RenderContext {
 	return RenderContext{
-		options:    options,
-		blockStack: &BlockStack{},
-		table:      &TableElement{},
-		stripper:   bluemonday.StrictPolicy(),
+		options:           options,
+		blockStack:        &BlockStack{},
+		table:             &TableElement{},
+		stripper:          bluemonday.StrictPolicy(),
+		hasParagraphImage: new(bool),
 	}
 }
 

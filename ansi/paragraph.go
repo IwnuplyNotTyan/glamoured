@@ -16,6 +16,8 @@ type ParagraphElement struct {
 
 // Render renders a ParagraphElement.
 func (e *ParagraphElement) Render(w io.Writer, ctx RenderContext) error {
+	*ctx.hasParagraphImage = false
+
 	bs := ctx.blockStack
 	rules := ctx.options.Styles.Paragraph
 
@@ -42,7 +44,7 @@ func (e *ParagraphElement) Finish(w io.Writer, ctx RenderContext) error {
 	defer mw.Close() //nolint:errcheck
 	if len(strings.TrimSpace(bs.Current().Block.String())) > 0 {
 		blk := bs.Current().Block.String()
-		if !ctx.options.PreserveNewLines {
+		if !ctx.options.PreserveNewLines && !*ctx.hasParagraphImage {
 			blk = strings.ReplaceAll(blk, "\n", " ")
 		}
 		flow := lipgloss.Wrap(blk, bs.Width(ctx), "")
@@ -59,5 +61,6 @@ func (e *ParagraphElement) Finish(w io.Writer, ctx RenderContext) error {
 
 	bs.Current().Block.Reset()
 	bs.Pop()
+	*ctx.hasParagraphImage = false
 	return nil
 }

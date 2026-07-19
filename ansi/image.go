@@ -176,6 +176,7 @@ func isHex(s string) bool {
 
 // Render renders an ImageElement.
 func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
+	*ctx.hasParagraphImage = true
 	if e.tryRenderBadge(w, ctx) {
 		return nil
 	}
@@ -220,5 +221,6 @@ func (e *ImageElement) Render(w io.Writer, ctx RenderContext) error {
 		}
 	}
 
+	_, _ = io.WriteString(w, "\n")
 	return nil
 }
